@@ -1,1 +1,0 @@
-CAJA NEGRA - G6
