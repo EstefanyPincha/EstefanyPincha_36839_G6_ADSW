@@ -1,0 +1,81 @@
+@startuml REQ004_RegistroCliente
+/'
+=== METADATOS DE TRAZABILIDAD ===
+Requisito: REQ-004
+Proyecto: Los Huertos del JuanK
+Version: v1.0
+Fecha: 12/11/2026
+Autores: Rubén Bustos, Estefany Pincha y Mateo Venegas
+Revision humana: revisión del equipo sobre clases, atributos y relaciones
+--- PROMPT BASE ---
+Actúa como analista de sistemas. A partir del requisito REQ-004,
+genera un diagrama de clases PlantUML para el registro de clientes
+de Los Huertos del JuanK. Representa una arquitectura de tres capas:
+entidad, servicio y repositorio. Incluye una clase de validación,
+una enumeración para el estado del cliente y una interfaz de
+repositorio con una implementación concreta para persistencia
+offline en Excel mediante Apache POI. Utiliza tipos apropiados
+para los datos y muestra atributos, operaciones y relaciones.
+--- FIN DE METADATOS ---
+'/
+
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+
+enum EstadoCliente {
+  ACTIVO
+  INACTIVO
+}
+
+class Cliente {
+- cedula: String
+- nombre: String
+- apellido: String
+- telefono: String
+- direccion: String
+- fechaCumpleanos: LocalDate
+- estado: EstadoCliente
+  + getCedula(): String
+  + getNombre(): String
+  + getApellido(): String
+  + getTelefono(): String
+  + getDireccion(): String
+  + getFechaCumpleanos(): LocalDate
+  + getEstado(): EstadoCliente
+  + setTelefono(telefono: String): void
+  + setDireccion(direccion: String): void
+  + setEstado(estado: EstadoCliente): void
+}
+
+class ValidarCliente {
+  + {static} validarCedula(cedula: String): boolean
+  + {static} validarTelefono(telefono: String): boolean
+  + {static} validarCamposCompletos(cliente: Cliente): boolean
+}
+
+class ClienteService {
+- repository: ClienteRepository
+  + registrarCliente(cliente: Cliente): boolean
+}
+
+interface ClienteRepository {
+  + registrar(cliente: Cliente): boolean
+  + existeCedula(cedula: String): boolean
+  + obtenerClientes(): List<Cliente>
+}
+
+class ClienteRepositoryExcel {
+- rutaArchivo: String
+  + registrar(cliente: Cliente): boolean
+  + existeCedula(cedula: String): boolean
+  + obtenerClientes(): List<Cliente>
+}
+
+ClienteService ..> ValidarCliente : valida
+ClienteService --> ClienteRepository : utiliza
+ClienteRepositoryExcel ..|> ClienteRepository
+ClienteRepositoryExcel ..> Cliente : lee / escribe
+ClienteService ..> Cliente : gestiona
+Cliente --> EstadoCliente : estado
+
+@enduml
