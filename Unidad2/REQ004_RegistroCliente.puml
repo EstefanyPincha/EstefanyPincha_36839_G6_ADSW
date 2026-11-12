@@ -3,30 +3,37 @@
 === METADATOS DE TRAZABILIDAD ===
 Requisito: REQ-004
 Proyecto: Los Huertos del JuanK
-Version: v1.0
+Version: v1.1
 Fecha: 12/11/2026
 Autores: Rubén Bustos, Estefany Pincha y Mateo Venegas
+Herramientas IA: Gemini Flash y Claude (versiones más recientes utilizadas)
 Revision humana: revisión del equipo sobre clases, atributos y relaciones
+ 
 --- PROMPT BASE ---
 Actúa como analista de sistemas. A partir del requisito REQ-004,
 genera un diagrama de clases PlantUML para el registro de clientes
-de Los Huertos del JuanK. Representa una arquitectura de tres capas:
-entidad, servicio y repositorio. Incluye una clase de validación,
+de Los Huertos del JuanK. Representa una arquitectura de tres
+capas: entidad, servicio y repositorio. Incluye una clase de validación,
 una enumeración para el estado del cliente y una interfaz de
 repositorio con una implementación concreta para persistencia
 offline en Excel mediante Apache POI. Utiliza tipos apropiados
 para los datos y muestra atributos, operaciones y relaciones.
+--- PROMPT DE ITERACIÓN v1.1 ---
+A partir del diagrama inicial, incorpora la operación
+actualizarEstado(cedula, estado) en ClienteService y en la interfaz
+ClienteRepository, y represéntala también en ClienteRepositoryExcel.
+Conserva las responsabilidades y relaciones del modelo original.
 --- FIN DE METADATOS ---
 '/
-
+ 
 skinparam classAttributeIconSize 0
 skinparam linetype ortho
-
+ 
 enum EstadoCliente {
   ACTIVO
   INACTIVO
 }
-
+ 
 class Cliente {
 - cedula: String
 - nombre: String
@@ -46,36 +53,39 @@ class Cliente {
   + setDireccion(direccion: String): void
   + setEstado(estado: EstadoCliente): void
 }
-
+ 
 class ValidarCliente {
   + {static} validarCedula(cedula: String): boolean
   + {static} validarTelefono(telefono: String): boolean
   + {static} validarCamposCompletos(cliente: Cliente): boolean
 }
-
+ 
 class ClienteService {
 - repository: ClienteRepository
   + registrarCliente(cliente: Cliente): boolean
+  + actualizarEstado(cedula: String, estado: EstadoCliente): boolean
 }
-
+ 
 interface ClienteRepository {
   + registrar(cliente: Cliente): boolean
   + existeCedula(cedula: String): boolean
+  + actualizarEstado(cedula: String, estado: EstadoCliente): boolean
   + obtenerClientes(): List<Cliente>
 }
-
+ 
 class ClienteRepositoryExcel {
 - rutaArchivo: String
   + registrar(cliente: Cliente): boolean
   + existeCedula(cedula: String): boolean
+  + actualizarEstado(cedula: String, estado: EstadoCliente): boolean
   + obtenerClientes(): List<Cliente>
 }
-
+ 
 ClienteService ..> ValidarCliente : valida
 ClienteService --> ClienteRepository : utiliza
 ClienteRepositoryExcel ..|> ClienteRepository
 ClienteRepositoryExcel ..> Cliente : lee / escribe
 ClienteService ..> Cliente : gestiona
 Cliente --> EstadoCliente : estado
-
+ 
 @enduml
