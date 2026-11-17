@@ -1,0 +1,122 @@
+@startuml RFFAC01_RegistroFactura
+/'
+=== METADATOS DE TRAZABILIDAD ===
+Requisito: RF-FAC-01 (SRS SGC Trofeos Sánchez, sección 2.2.2.1.1)
+Proyecto: Sistema de Gestión de Compras «Trofeos Sánchez»
+Version: v1.0
+Fecha: 17/11/2026
+Autores: Rubén Bustos, Estefany Pincha y Mateo Venegas
+Herramientas IA: Claude (versión más reciente utilizada)
+Revision humana: revisión del equipo sobre clases, atributos y relaciones
+
+--- PROMPT BASE ---
+Actúa como analista de sistemas. A partir del requisito RF-FAC-01,
+genera un diagrama de clases PlantUML para el registro de facturas
+del Sistema de Gestión de Compras de Trofeos Sánchez. Representa una
+arquitectura de tres capas: entidad, servicio y repositorio. La
+factura tiene número (NNN-NNN-NNNNNNNNN), fecha de emisión, proveedor
+activo, uno o más ítems de detalle (producto, cantidad y precio
+unitario), un monto total calculado a partir de los ítems y un PDF
+opcional de respaldo. Incluye una clase de validación, una enumeración
+para el estado de la factura, las entidades Proveedor y Producto, y una
+interfaz de repositorio con una implementación sobre base de datos que
+guarde todo en una sola transacción. Utiliza tipos de TypeScript y
+muestra atributos, operaciones, multiplicidades y relaciones.
+--- FIN DE METADATOS ---
+'/
+
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam shadowing false
+skinparam classBackgroundColor #F1F1F1
+skinparam classBorderColor #181818
+skinparam arrowColor #181818
+skinparam noteBackgroundColor #FEFFDD
+skinparam noteBorderColor #181818
+
+enum EstadoFactura {
+  PENDIENTE
+  PARCIAL
+  PAGADA
+}
+
+class Proveedor {
+  - ruc: string
+  - razonSocial: string
+  + getRuc(): string
+  + estaActivo(): boolean
+}
+
+class Producto {
+  - codigo: string
+  - nombre: string
+  + getCodigo(): string
+  + estaActivo(): boolean
+}
+
+class DetalleFactura {
+  - producto: Producto
+  - cantidad: number
+  - precioUnitario: number
+  + calcularSubtotal(): number
+}
+
+class Factura {
+  - numero: string
+  - fechaEmision: Date
+  - proveedor: Proveedor
+  - items: DetalleFactura[]
+  - total: number
+  - saldo: number
+  - archivoPdf: string
+  - estado: EstadoFactura
+  + agregarItem(item: DetalleFactura): void
+  + quitarItem(indice: number): void
+  + calcularTotal(): number
+  + getNumero(): string
+  + getProveedor(): Proveedor
+  + getTotal(): number
+  + getEstado(): EstadoFactura
+}
+
+class ValidarFactura {
+  + {static} validarNumero(numero: string): boolean
+  + {static} validarFecha(fecha: Date): boolean
+  + {static} validarItems(items: DetalleFactura[]): boolean
+  + {static} validarCamposCompletos(f: Factura): boolean
+}
+
+class FacturaService {
+  - repository: FacturaRepository
+  + registrarFactura(f: Factura, pdf?: File): Resultado
+}
+
+interface FacturaRepository {
+  + registrar(f: Factura, pdf?: File): boolean
+  + existeFactura(numero: string, ruc: string): boolean
+  + obtenerFacturas(): Factura[]
+}
+
+class FacturaRepositoryBD {
+  - conexion: ConexionBD
+  + registrar(f: Factura, pdf?: File): boolean
+  + existeFactura(numero: string, ruc: string): boolean
+  + obtenerFacturas(): Factura[]
+}
+
+note right of FacturaService
+  Actor: Analista de Compras
+  Trazabilidad: RF-FAC-01
+end note
+
+FacturaService ..> ValidarFactura : valida
+FacturaService --> FacturaRepository : utiliza
+FacturaRepositoryBD ..|> FacturaRepository
+FacturaRepositoryBD ..> Factura : lee / escribe
+FacturaService ..> Factura : gestiona
+Factura *-- "1..*" DetalleFactura : contiene
+Factura --> "1" Proveedor : emitida por
+DetalleFactura --> "1" Producto : refiere a
+Factura --> EstadoFactura : estado
+
+@enduml
